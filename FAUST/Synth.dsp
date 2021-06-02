@@ -89,17 +89,39 @@ kdRamp2 = kdFreq2+(kdFreq2*kdDelta2*kdEnvT2);
 kdEnv2 = en.ar(kdA2, kdR2, kdTrig2);
 krone2 = os.triangle(kdRamp2)*kdEnv2;
 
-
-
-
-
-
-
 //-------------------------------------------SWOOSH/PERC
+//___________________VARIABLES
+//swerc1
+spFreq1 = hslider("spFreq1", 1500, 100, 15000, 1);
+spTrig1 = button("spTrig1");
+spDelta1 = hslider("spDelta1",-0.5,-0.99,5,0.001);
+spA1 = hslider("spA1", 0.01, 0, 15, 0.01);
+spR1 = hslider("spR1", 0.01, 0, 15, 0.01);
+
+//swerc2
+spFreq2 = hslider("spFreq2", 1500, 100, 15000, 1);
+spTrig2 = button("spTrig2");
+spDelta2 = hslider("spDelta2",-0.5,-0.99,5,0.001);
+spA2 = hslider("spA2", 0.01, 0, 15, 0.01);
+spR2 = hslider("spR2", 0.01, 0, 15, 0.01);
+
+//___________________DSP
+//swerc1
+spEnTrig1 = en.ar(spA1+spR1,0,spTrig1);
+spRamp1 = spFreq1+(spFreq1*spDelta1*spEnTrig1);
+spEnv1 = en.ar(spA1, spR1, spTrig1);
+swerc1 = no.noise:fi.resonlp(spRamp1,5,0.5)*spEnv1;
+
+//swerc2
+spEnTrig2 = en.ar(spA2+spR2,0,spTrig2);
+spRamp2 = spFreq2+(spFreq2*spDelta2*spEnTrig2);
+spEnv2 = en.ar(spA2, spR2, spTrig2);
+swerc2 = no.noise:fi.resonlp(spRamp2,5,0.5)*spEnv2;
 
 //-------------------------------------------OUTPUT
-
+process=0;
 
 //-------------------------------------------TESTING
 // process = fmSynths:co.limiter_1176_R4_mono ;
 // process = krone1+krone2:co.limiter_1176_R4_mono;
+// process = swerc1+swerc2:co.limiter_1176_R4_mono;
