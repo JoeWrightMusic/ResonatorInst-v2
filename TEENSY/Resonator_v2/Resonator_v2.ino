@@ -9,8 +9,10 @@
 #include <HX711.h>
 #include "Synth.h"
 //__________________________________________________________________DEBUG
+
 #define DEBUG
 //#define PRINTSENS
+
 //__________________________________________________________________TEENSY AUDIO SETUP
 /*create audio objects*/
 Synth synth;
@@ -28,6 +30,7 @@ AudioConnection       patchCord2(playWav1,0,mixerRight,1);
 /**/
 AudioConnection       parchCord3(mixerLeft, 0, out, 0);
 AudioConnection       parchCord4(mixerRight, 0, out, 1);
+
 //__________________________________________________________________GYRO SETUP
 Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1();
 float x=0;
@@ -36,7 +39,8 @@ float z=0;
 float xSmooth[10];
 float ySmooth[10];
 float zSmooth[10];
-float gyroCirc=0;
+int gyroCirc=0;
+
 void setupGyro()
 {
   /* 1.) Set the accelerometer range*/
@@ -46,18 +50,28 @@ void setupGyro()
   /* 3.) Setup the gyroscope*/
   lsm.setupGyro(lsm.LSM9DS1_GYROSCALE_245DPS);
 }
+
 //__________________________________________________________________LOAD CELL SETUP
-  const int LOADCELL_DOUT_PIN = 3;
-  const int LOADCELL_SCK_PIN = 4;
-  int loadSmooth[10];
-  int loadCirc = 0;
-  HX711 scale;
+const int LOADCELL_SENSITIVITY=1;
+const int LOADCELL_DOUT_PIN = 3;
+const int LOADCELL_SCK_PIN = 4;
+float load=0;
+float loadSmooth[2];
+int loadCirc = 0;
+float lcMin=0;
+float lcMax=0;
+float lcRange=300;
+int threshCount=0;
+int thresh=3;
+HX711 scale;
+
 //__________________________________________________________________WAV FILE SETUP
 #define SDCARD_CS_PIN    10
 #define SDCARD_MOSI_PIN  7
 #define SDCARD_SCK_PIN   14
 int wavPlaying = 0;
 int wavBroken = 0;
+
 //__________________________________________________________________VOLUME SETUP
 const int VOL_PIN = 15;
 const float SET_SUB_VOL=1;
@@ -66,7 +80,6 @@ const float SET_WAV_VOL=1;
 float vol = 0.0;
 float volSmooth[20];
 int volCirc = 0;
-
 
 //__________________________________________________________________START UP!
 void setup() {
@@ -83,8 +96,18 @@ void setup() {
   mixerRight.gain(0, SET_SYNTH_VOL);
   mixerRight.gain(1, SET_WAV_VOL);
   
-  //_______________________________Start up Synth
+  //_______________________________Start up Load Cell
   scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+  while(scale.is_ready() != true){delay(0.1);};
+  load = scale.read()*0.0001*LOADCELL_SENSITIVITY;
+  lcMin=load;
+  lcMax=load+lcRange;
+  
+
+  #ifdef DEBUG//???????????????????
+  Serial.print("loadcell started\tInitial Min:\t");
+  Serial.println(lcMin);
+  #endif//?????????????????????????
   
   //_______________________________Start up Gyro
   #ifdef DEBUG//???????????????????
@@ -109,37 +132,90 @@ void setup() {
   }
   //________________________________Set up Smoothing Arrays
   for(int i=0; i<20; i++){volSmooth[i]=0;};
-  for(int i=0; i<10; i++){xSmooth[i]=0; ySmooth[i]=0;zSmooth[i]=0;loadSmooth[i]=0}; 
+  for(int i=0; i<10; i++){xSmooth[i]=0; ySmooth[i]=0;zSmooth[i]=0;};
+  for(int i=0; i<2; i++){loadSmooth[i]=0;}; 
 }
 
 //__________________________________________________________________SENSOR READ FUNTIONS
+//________________________________Dynamically Adjust Load Cell Range
+void adjustRange(int curRd){
+  if(curRd<(lcMin-5)){
+      threshCount--;
+      if(threshCount<(thresh*-1)){
+        lcMin=lcMin-1;
+        lcMax=lcMin+lcRange;
+      }
+    }
+  else if(curRd>(lcMax+5)){
+      threshCount++;
+      if(threshCount>thresh){
+        lcMax=lcMax+1;
+        lcMin=lcMax-lcRange;
+      }
+  }
+  else{
+      threshCount=0;
+  }
+}
 //________________________________Read Load Cell
 void readLoadCell(){
-  /*if scale ready get loadcell value*/
+    /*if scale ready get loadcell value*/
     if (scale.is_ready()) {
-      float reading = scale.read();
+      load = scale.read()*0.0001*LOADCELL_SENSITIVITY;
+      /*store last 10 readings and average
+      to smooth out readings*/
+      loadCirc=(loadCirc+1)%2;
+      float loadTally=0;
+      loadSmooth[loadCirc]=load;
+      for(int i=0; i<2; i++){loadTally=loadTally+loadSmooth[i];};
+      load = loadTally/2;
+      /* adjust range and scale to 0-1 */
+      adjustRange(load);
+      load = map(load, lcMin, lcMax, 0.0, 1.0);
+      load = constrain(load, 0.0, 1.0);
       
       #ifdef DEBUG//??????????????
-      Serial.print(reading);Serial.print("\t");
+      Serial.print(load);Serial.print("\t");
       #endif//????????????????????
     }
     else{
       #ifdef DEBUG//??????????????
-      Serial.print("---");Serial.print("\t");
+      Serial.print(load);Serial.print("\t");
       #endif//????????????????????
     }
 }
 
 //________________________________Read Gyro
 void readGyro(){
+  /*get gyro readings*/
   lsm.read(); 
   sensors_event_t a, m, g, temp;
   lsm.getEvent(&a, &m, &g, &temp); 
+  x=g.gyro.x;
+  y=g.gyro.y;
+  z=g.gyro.z;
+  /*store last 10 readings and average
+    to smooth out readings*/
+  gyroCirc=(gyroCirc+1)%10;
+  float gyroTallyX=0;
+  float gyroTallyY=0;
+  float gyroTallyZ=0;
+  xSmooth[gyroCirc]=x;
+  ySmooth[gyroCirc]=y;
+  zSmooth[gyroCirc]=z;
+  for(int i=0; i<10; i++){
+    gyroTallyX=gyroTallyX+xSmooth[i];
+    gyroTallyY=gyroTallyY+ySmooth[i];
+    gyroTallyZ=gyroTallyZ+zSmooth[i];
+  };
+  x=gyroTallyX/10;
+  y=gyroTallyY/10;
+  z=gyroTallyZ/10;
   
   #ifdef DEBUG//??????????????????
-  Serial.print(g.gyro.x);Serial.print("\t");
-  Serial.print(g.gyro.y);Serial.print("\t");
-  Serial.print(g.gyro.z);Serial.print("\t");
+  Serial.print(x);Serial.print("\t");
+  Serial.print(y);Serial.print("\t");
+  Serial.print(z);Serial.print("\t");
   #endif
 }
 
@@ -151,10 +227,10 @@ void readVolume(){
 
   volSmooth[volCirc]=vol;
   volCirc=(volCirc+1)%20;
-
   float volTally=0;
   for(int i=0; i<20; i++){volTally = volTally+volSmooth[i];}
   vol = volTally/20;
+  
   mixerLeft.gain(0, SET_SUB_VOL*vol);
   mixerRight.gain(0, SET_SYNTH_VOL*vol);
   mixerRight.gain(1, SET_WAV_VOL*vol);
@@ -162,7 +238,6 @@ void readVolume(){
   #ifdef DEBUG//??????????????????
   Serial.println(vol);
   #endif//????????????????????????
-  
   };
 
 //__________________________________________________________________PLAY AUDIO
