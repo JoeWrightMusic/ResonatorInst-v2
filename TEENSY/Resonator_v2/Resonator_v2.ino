@@ -10,8 +10,8 @@
 #include "Synth.h"
 //__________________________________________________________________DEBUG
 
-#define DEBUG
-//#define PRINTSENS
+//#define DEBUG
+#define PRINTSCORE
 
 //__________________________________________________________________TEENSY AUDIO SETUP
 /*create audio objects*/
@@ -71,6 +71,8 @@ HX711 scale;
 #define SDCARD_SCK_PIN   14
 int wavPlaying = 0;
 int wavBroken = 0;
+float pos=0;
+float section=0;
 
 //__________________________________________________________________VOLUME SETUP
 const int VOL_PIN = 15;
@@ -84,7 +86,7 @@ int volCirc = 0;
 //__________________________________________________________________START UP!
 void setup() {
   //_______________________________Serial for Debugging
-  #if defined(DEBUG) || defined(PRINTSENS)
+  #if defined(DEBUG) || defined(PRINTSCORE)
   Serial.begin(115200);  
   #endif
   
@@ -184,7 +186,6 @@ void readLoadCell(){
       #endif//????????????????????
     }
 }
-
 //________________________________Read Gyro
 void readGyro(){
   /*get gyro readings*/
@@ -240,6 +241,163 @@ void readVolume(){
   #endif//????????????????????????
   };
 
+
+
+
+  
+//==================================================================SCORE
+/*SECTIONS
+ * 0 INTRO - Chill, mellow laminar chords - 0 - 60,000
+ * 1 DESCENT - Sight of black hole: downward glisses   - 60,000 - 120000
+ * 2 STRUGGLE - Drones/Action - 120000 - 370000
+ * 3 JAWS OF DEFEAT - Rumble 370000-395000
+ * 4 SOURCE STAR SAVES THE DAY - as intro - 395000+
+ */
+ //__________________________________________________________________STRUCTURE
+//Get position in structure from Wav File
+void locate(){
+  pos = playWav1.positionMillis();
+
+    if(pos<60000){//SECTION0 - Intro
+      section = map(pos, 0, 60000, 0.0, 1.0);
+    };
+    if(pos>60000 && pos<120000){//SECTION1 - Descent
+      section = map(pos, 60000, 120000, 1.0, 2.0);
+    };
+    if(pos>120000 && pos<370000){//SECTION2 - Struggle
+      section = map(pos, 120000, 370000, 2.0, 3.0);
+    };
+    if(pos>370000 && pos<395000){//SECTION3 - Jaws of Defeat
+      section = map(pos, 370000, 395000, 3.0, 4.0);
+    };
+    if(pos>395000){//SECTION4 - Saved
+      section = map(pos, 395000, 450000, 4.0, 5.0);
+    };
+  
+  #ifdef PRINTSCORE//?????????????
+  Serial.print(pos);Serial.print("\t");
+  Serial.println(section);
+  #endif//????????????????????????
+  };
+ //__________________________________________________________________SECTIONS
+ void chillFM(){
+    int notes[] = {48, 50, 52, 55, 57, 60, 62, 64, 67, 69, 72, 74, 76, 79, 81};//, 84, 86, 88, 91, 93, 96, 98, 100, 103};
+    int freq;
+    int noteRange=15;
+    
+    synth.setParamValue("fmGateT1",1);/*Modulator Mult*/
+    synth.setParamValue("fmGateT2",1);/*Modulator Mult*/
+    synth.setParamValue("fmGateT3",1);/*Modulator Mult*/
+    synth.setParamValue("fmVerb",0.6);
+    synth.setParamValue("fmVol",map(constrain(section,0,0.3),0,0.3,0,0.45));
+    
+    
+    synth.setParamValue("bpm",1 + load*5);/*Modulator Mult*/
+    freq = random(noteRange);
+    freq = notes[freq];
+    synth.setParamValue("fmFreq1", freq);
+  
+    synth.setParamValue("fmMm1",2);/*Modulator Mult*/
+    synth.setParamValue("fmDp1",1);/*Modulator Depth*/
+    synth.setParamValue("fmAC1",3-(load*1.5));/*Carrier Attack*/
+    synth.setParamValue("fmRC1",3-(load*1.5));/*Carrier Release*/
+    synth.setParamValue("fmAM1",1);/*Modulator Attack*/
+    synth.setParamValue("fmRM1",1.5);/*Modulator Release*/
+    float mod = map(constrain(x,-2,2),-2,2,0.5,10);
+    Serial.println(map(constrain(x,-2,2),-2,2,0.5,10));
+    synth.setParamValue("fmModWheel1",mod);/*Mod Wheel*/
+
+    freq = random(noteRange);
+    freq = notes[freq];
+    synth.setParamValue("fmFreq2", freq);
+
+    synth.setParamValue("fmMm2",2);/*Modulator Mult*/
+    synth.setParamValue("fmDp2",1);/*Modulator Depth*/
+    synth.setParamValue("fmAC2",3-(load*1.5));/*Carrier Attack*/
+    synth.setParamValue("fmRC2",3-(load*1.5));/*Carrier Release*/
+    synth.setParamValue("fmAM2",1);/*Modulator Attack*/
+    synth.setParamValue("fmRM2",1.5);/*Modulator Release*/
+    mod = map(constrain(y,-2,2),-2,2,0.5,10);
+    synth.setParamValue("fmModWheel1",mod);/*Mod Wheel*/
+
+    freq = random(noteRange);
+    freq = notes[freq];
+    synth.setParamValue("fmFreq3", freq);
+    
+    synth.setParamValue("fmMm3",2);/*Modulator Mult*/
+    synth.setParamValue("fmDp3",1);/*Modulator Depth*/
+    synth.setParamValue("fmAC3",3-(load*1.5));/*Carrier Attack*/
+    synth.setParamValue("fmRC3",3-(load*1.5));/*Carrier Release*/
+    synth.setParamValue("fmAM3",1);/*Modulator Attack*/
+    synth.setParamValue("fmRM3",1.5);/*Modulator Release*/
+    mod = map(constrain(z,-2,2),-2,2,0.1,10);
+    synth.setParamValue("fmModWheel1", mod);/*Mod Wheel*/
+  };
+  
+//  void descent(){
+//    int notes[] = {48, 50, 52, 55, 57, 60, 62, 64, 67, 69, 72, 74, 76, 79, 81};//, 84, 86, 88, 91, 93, 96, 98, 100, 103};
+//    int freq;
+//    int noteRange=15;
+//    float sect = section - 1;
+//    
+//    synth.setParamValue("fmGateT1",1);/*Modulator Mult*/
+//    synth.setParamValue("fmGateT2",1);/*Modulator Mult*/
+//    synth.setParamValue("fmGateT3",1);/*Modulator Mult*/
+//    synth.setParamValue("fmVerb",0.6);
+//    synth.setParamValue("fmVol",map(constrain(sect,0,0.3),0,0.3,0.45,0.6));
+//    
+//    
+//    synth.setParamValue("bpm",1 + load*5);/*Modulator Mult*/
+//    freq = random(noteRange);
+//    freq = notes[freq];
+//    synth.setParamValue("fmFreq1", freq);
+//  
+//    synth.setParamValue("fmMm1",2+(sect*4));/*Modulator Mult*/
+//    synth.setParamValue("fmDp1",1);/*Modulator Depth*/
+//    synth.setParamValue("fmAC1",3-(load*1.5));/*Carrier Attack*/
+//    synth.setParamValue("fmRC1",3-(load*1.5));/*Carrier Release*/
+//    synth.setParamValue("fmAM1",1);/*Modulator Attack*/
+//    synth.setParamValue("fmRM1",1.5);/*Modulator Release*/
+//    float mod = map(constrain(x,-2,2),-2,2,0.5,10);
+//    Serial.println(map(constrain(x,-2,2),-2,2,0.5,10));
+//    synth.setParamValue("fmModWheel1",mod);/*Mod Wheel*/
+//
+//    freq = random(noteRange);
+//    freq = notes[freq];
+//    synth.setParamValue("fmFreq2", freq);
+//
+//    synth.setParamValue("fmMm2",2+(sect*5.8));/*Modulator Mult*/
+//    synth.setParamValue("fmDp2",1);/*Modulator Depth*/
+//    synth.setParamValue("fmAC2",3-(load*1.5));/*Carrier Attack*/
+//    synth.setParamValue("fmRC2",3-(load*1.5));/*Carrier Release*/
+//    synth.setParamValue("fmAM2",1);/*Modulator Attack*/
+//    synth.setParamValue("fmRM2",1.5);/*Modulator Release*/
+//    mod = map(constrain(y,-2,2),-2,2,0.5,10);
+//    synth.setParamValue("fmModWheel1",mod);/*Mod Wheel*/
+//
+//    freq = random(noteRange);
+//    freq = notes[freq];
+//    synth.setParamValue("fmFreq3", freq);
+//    
+//    synth.setParamValue("fmMm3",2+(sect*-1.3));/*Modulator Mult*/
+//    synth.setParamValue("fmDp3",1);/*Modulator Depth*/
+//    synth.setParamValue("fmAC3",3-(load*1.5));/*Carrier Attack*/
+//    synth.setParamValue("fmRC3",3-(load*1.5));/*Carrier Release*/
+//    synth.setParamValue("fmAM3",1);/*Modulator Attack*/
+//    synth.setParamValue("fmRM3",1.5);/*Modulator Release*/
+//    mod = map(constrain(z,-2,2),-2,2,0.1,10);
+//    synth.setParamValue("fmModWheel1", mod);/*Mod Wheel*/
+//  };
+ 
+ //__________________________________________________________________
+
+  
+//==================================================================
+
+
+
+
+
 //__________________________________________________________________PLAY AUDIO
 void playAudio(const char *filename)
 {
@@ -259,6 +417,8 @@ void playAudio(const char *filename)
       readGyro();
       readLoadCell();
       readVolume();
+      locate();
+      chillFM();
       delay(10);
     }
   } else {

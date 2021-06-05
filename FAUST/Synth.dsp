@@ -8,8 +8,10 @@ step=os.phasor(48,barHz):int+1;
 
 //-------------------------------------------FM-2OPs
 //___________________VARIABLES
+fmVol = hslider("fmVol",0.5,0,1,0.001);
+fmVerb = hslider("fmVerb", 0.5,0,1,0.001);
 //fm synth 1
-fmNxtFreq1 = hslider("fmFreq1",150,10,20000,0.01):si.smoo;
+fmNxtFreq1 = hslider("fmFreq1",150,10,20000,0.01):ba.ba.midikey2hz;
 fmMm1 = hslider("fmMm1",0.5,0.0,100,0.0001):si.smoo;
 fmDp1 = hslider("fmDp1",0.5,0.00,10,0.0001):si.smoo;
 fmAM1 = hslider("fmAM1",0.1,0.001,10,0.01);
@@ -22,7 +24,7 @@ fmEucNo1 = hslider("fmEucNo1", 7, 0, 24, 1);
 fmModWheel1 = hslider("fmModWheel1", 1, 0.1, 1.9, 0.001);
 
 //fm synth 2
-fmNxtFreq2 = hslider("fmFreq2",620,10,20000,0.01):si.smoo;
+fmNxtFreq2 = hslider("fmFreq2",620,10,20000,0.01):ba.ba.midikey2hz;
 fmMm2 = hslider("fmMm2",0.5,0.0,100,0.0001):si.smoo;
 fmDp2 = hslider("fmDp2",0.5,0.00,10,0.0001):si.smoo;
 fmAM2 = hslider("fmAM2",0.1,0.001,10,0.01);
@@ -35,7 +37,7 @@ fmEucNo2 = hslider("fmEucNo2", 9, 0, 24, 1);
 fmModWheel2 = hslider("fmModWheel2", 1, 0.1, 1.9, 0.001);
 
 //fm synth 3
-fmNxtFreq3 = hslider("fmFreq3",1200,10,20000,0.01):si.smoo;
+fmNxtFreq3 = hslider("fmFreq3",1200,10,20000,0.01):ba.ba.midikey2hz;
 fmMm3 = hslider("fmMm3",0.5,0.0,100,0.0001):si.smoo;
 fmDp3 = hslider("fmDp3",0.5,0.00,10,0.0001):si.smoo;
 fmAM3 = hslider("fmAM3",0.1,0.001,10,0.01);
@@ -79,19 +81,21 @@ fm2op3(freq,mMul,dMul,trig,am,rm,ac,rc) =
     )*en.asr(ac,1,rc, trig);
 fmDpm3 = fmDp3*fmModWheel3;
 //fm group
+dry = 1-fmVerb;
 fmSynths = (
     fm2op1(fmFreq1,fmMm1,fmDpm1,fmTrig1, fmAM1,fmRM1,fmAC1,fmRC1)+
     fm2op2(fmFreq2,fmMm2,fmDpm2,fmTrig2, fmAM2,fmRM2,fmAC2,fmRC2)+
     fm2op3(fmFreq3,fmMm3,fmDpm3,fmTrig3, fmAM3,fmRM3,fmAC3,fmRC3)
-)<:_*(0.5),_:re.mono_freeverb(0.6,0.9,0.1,0.9)*(0.4)+_;
+)<:_*(dry),_:re.mono_freeverb(0.6,0.9,0.1,0.9)*(fmVerb)+_;
 
 
 // re.mono_freeverb(0.5,0.9,0.1,0.5)
 //-------------------------------------------KICK/DRONEs
 //___________________VARIABLES
+kroneVol = hslider("kroneVol",0.5,0,1,0.001);
 //krone1
 kdTrig1 = button("kdTrig1");
-kdNxtFreq1 = hslider("kdNxtFreq1", 150, 10, 600, 1);
+kdNxtFreq1 = hslider("kdNxtFreq1", 150, 10, 600, 1):ba.ba.midikey2hz;
 kdDelta1 = hslider("kdDelta1", -0.9,-0.99,5,0.001);
 kdA1 = hslider("kdA1", 0.01, 0, 15, 0.01);
 kdR1 = hslider("kdR1", 0.09, 0, 15, 0.01);
@@ -101,7 +105,7 @@ kdEucNo1 = hslider("kdEucNo1", 16, 0, 24, 1);
 
 //krone2
 kdTrig2 = button("kdTrig2");
-kdNxtFreq2 = hslider("kdNxtFreq2", 80, 10, 600, 1);
+kdNxtFreq2 = hslider("kdNxtFreq2", 80, 10, 600, 1):ba.ba.midikey2hz;
 kdDelta2 = hslider("kdDelta2", -0.1,-0.99,5,0.001);
 kdA2 = hslider("kdA2", 2, 0, 15, 0.01);
 kdR2 = hslider("kdR2", 2, 0, 15, 0.01);
@@ -158,8 +162,8 @@ krone2 = os.triangle(kdRamp2)*kdEnv2;
 // swerc2 = no.noise:fi.resonlp(spRamp2,5,0.5)*spEnv2;
  
 //-------------------------------------------OUTPUT
-high = fmSynths:co.compressor_mono(20,-15,0.01,0.02);
-low = krone1+krone2+(high:fi.lowpass6e(150)*0.2):co.compressor_mono(20,-15,0.01,0.02);
+high = fmSynths:co.compressor_mono(20,-15,0.01,0.02)*fmVol;
+low = krone1+krone2+(high:fi.lowpass6e(150)*0.2):co.compressor_mono(20,-15,0.01,0.02)*kroneVol;
 process = high, low;
 
 //-------------------------------------------TESTING
