@@ -10,8 +10,8 @@
 #include "Synth.h"
 //__________________________________________________________________DEBUG
 
-//#define DEBUG
-#define PRINTSCORE
+#define DEBUG
+//#define PRINTSCORE
 
 //__________________________________________________________________TEENSY AUDIO SETUP
 /*create audio objects*/
@@ -40,6 +40,9 @@ float xSmooth[10];
 float ySmooth[10];
 float zSmooth[10];
 int gyroCirc=0;
+float gSlidX[2]={0,0};
+float gSlidY[2]={0,0};
+float gSlidZ[2]={0,0};
 
 void setupGyro()
 {
@@ -77,8 +80,8 @@ float section=0;
 //__________________________________________________________________VOLUME SETUP
 const int VOL_PIN = 15;
 const float SET_SUB_VOL=1;
-const float SET_SYNTH_VOL=1;
-const float SET_WAV_VOL=1;
+const float SET_SYNTH_VOL=0.8;
+const float SET_WAV_VOL=0.18;
 float vol = 0.0;
 float volSmooth[20];
 int volCirc = 0;
@@ -212,12 +215,28 @@ void readGyro(){
   x=gyroTallyX/10;
   y=gyroTallyY/10;
   z=gyroTallyZ/10;
+
+  /*use gyros to move away from previous position*/
+  if(abs(x)>0.05){gSlidX[0]=gSlidX[1]+x;};
+  if(abs(y)>0.05){gSlidY[0]=gSlidY[1]+y;};
+  if(abs(z)>0.05){gSlidZ[0]=gSlidZ[1]+z;};
+  /*map arbitrary position values to a wrapped sin curve*/
+  x= sin(gSlidX[0]/5);
+  y= sin(gSlidY[0]/5);
+  z= sin(gSlidZ[0]/5);
+  /*record current state for the next loop*/
+  gSlidX[1]=gSlidX[0];
+  gSlidY[1]=gSlidY[0];
+  gSlidZ[1]=gSlidZ[0];
   
   #ifdef DEBUG//??????????????????
   Serial.print(x);Serial.print("\t");
   Serial.print(y);Serial.print("\t");
   Serial.print(z);Serial.print("\t");
   #endif
+
+
+  
 }
 
 //________________________________Read Volume
@@ -289,7 +308,7 @@ void locate(){
     synth.setParamValue("fmGateT2",1);/*Modulator Mult*/
     synth.setParamValue("fmGateT3",1);/*Modulator Mult*/
     synth.setParamValue("fmVerb",0.6);
-    synth.setParamValue("fmVol",map(constrain(section,0,0.3),0,0.3,0,0.45));
+    synth.setParamValue("fmVol",map(constrain(section,0,0.25),0,0.3,0,0.35));
     
     
     synth.setParamValue("bpm",1 + load*5);/*Modulator Mult*/
@@ -303,8 +322,7 @@ void locate(){
     synth.setParamValue("fmRC1",3-(load*1.5));/*Carrier Release*/
     synth.setParamValue("fmAM1",1);/*Modulator Attack*/
     synth.setParamValue("fmRM1",1.5);/*Modulator Release*/
-    float mod = map(constrain(x,-2,2),-2,2,0.5,10);
-    Serial.println(map(constrain(x,-2,2),-2,2,0.5,10));
+    float mod = map(x,-1,1,0.5,10);
     synth.setParamValue("fmModWheel1",mod);/*Mod Wheel*/
 
     freq = random(noteRange);
@@ -317,7 +335,7 @@ void locate(){
     synth.setParamValue("fmRC2",3-(load*1.5));/*Carrier Release*/
     synth.setParamValue("fmAM2",1);/*Modulator Attack*/
     synth.setParamValue("fmRM2",1.5);/*Modulator Release*/
-    mod = map(constrain(y,-2,2),-2,2,0.5,10);
+    mod = map(y,-1,1,0.5,10);
     synth.setParamValue("fmModWheel1",mod);/*Mod Wheel*/
 
     freq = random(noteRange);
@@ -330,8 +348,27 @@ void locate(){
     synth.setParamValue("fmRC3",3-(load*1.5));/*Carrier Release*/
     synth.setParamValue("fmAM3",1);/*Modulator Attack*/
     synth.setParamValue("fmRM3",1.5);/*Modulator Release*/
-    mod = map(constrain(z,-2,2),-2,2,0.1,10);
+    mod = map(z,-1,1,0.1,10);
     synth.setParamValue("fmModWheel1", mod);/*Mod Wheel*/
+
+
+
+//    //TEMP++++++
+//    synth.setParamValue("kdNxtFreq1", 60-24);
+//    synth.setParamValue("kdDelta1", 0);
+//    synth.setParamValue("kdA1", 4);
+//    synth.setParamValue("kdR1", 4);
+//    synth.setParamValue("kdGateT1", 1);
+//    synth.setParamValue("kdEucNo1", 16);
+//
+//    synth.setParamValue("kdNxtFreq2", 60-27);
+//    synth.setParamValue("kdDelta2", 0);
+//    synth.setParamValue("kdA2", 4);
+//    synth.setParamValue("kdR2", 4);
+//    synth.setParamValue("kdGateT2", 1);
+//    synth.setParamValue("kdEucNo2", 12);
+
+    
   };
   
 //  void descent(){
