@@ -80,8 +80,8 @@ float section=0;
 //__________________________________________________________________VOLUME SETUP
 const int VOL_PIN = 15;
 const float SET_SUB_VOL=1;
-const float SET_SYNTH_VOL=0.8;
-const float SET_WAV_VOL=0.18;
+const float SET_SYNTH_VOL=0.6;
+const float SET_WAV_VOL=0;//0.18;
 float vol = 0.0;
 float volSmooth[20];
 int volCirc = 0;
@@ -307,8 +307,8 @@ void locate(){
     synth.setParamValue("fmGateT1",1);/*Modulator Mult*/
     synth.setParamValue("fmGateT2",1);/*Modulator Mult*/
     synth.setParamValue("fmGateT3",1);/*Modulator Mult*/
-    synth.setParamValue("fmVerb",0.6);
-    synth.setParamValue("fmVol",map(constrain(section,0,0.25),0,0.3,0,0.35));
+    synth.setParamValue("fmVerb",0.9);
+    synth.setParamValue("fmVol",map(constrain(section,0,0.25),0,0.3,0,0.25));
     
     
     synth.setParamValue("bpm",1 + load*5);/*Modulator Mult*/
