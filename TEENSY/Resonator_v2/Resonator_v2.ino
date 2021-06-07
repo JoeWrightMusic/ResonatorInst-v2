@@ -217,9 +217,9 @@ void readGyro(){
   z=gyroTallyZ/10;
 
   /*use gyros to move away from previous position*/
-  if(abs(x)>0.05){gSlidX[0]=gSlidX[1]+x;};
-  if(abs(y)>0.05){gSlidY[0]=gSlidY[1]+y;};
-  if(abs(z)>0.05){gSlidZ[0]=gSlidZ[1]+z;};
+  if(abs(x)>0.1){gSlidX[0]=gSlidX[1]+x;};
+  if(abs(y)>0.1){gSlidY[0]=gSlidY[1]+y;};
+  if(abs(z)>0.1){gSlidZ[0]=gSlidZ[1]+z;};
   /*map arbitrary position values to a wrapped sin curve*/
   x= sin(gSlidX[0]/5);
   y= sin(gSlidY[0]/5);
@@ -299,6 +299,7 @@ void locate(){
   #endif//????????????????????????
   };
  //__________________________________________________________________SECTIONS
+ //________________________________0 - INTRO
  void chillFM(){
     int notes[] = {48, 50, 52, 55, 57, 60, 62, 64, 67, 69, 72, 74, 76, 79, 81};//, 84, 86, 88, 91, 93, 96, 98, 100, 103};
     int freq;
@@ -307,47 +308,47 @@ void locate(){
     synth.setParamValue("fmGateT1",1);/*Modulator Mult*/
     synth.setParamValue("fmGateT2",1);/*Modulator Mult*/
     synth.setParamValue("fmGateT3",1);/*Modulator Mult*/
-    synth.setParamValue("fmVerb",0.9);
+    synth.setParamValue("fmVerb",1);
     synth.setParamValue("fmVol",map(constrain(section,0,0.25),0,0.3,0,0.25));
     
     
-    synth.setParamValue("bpm",1 + load*5);/*Modulator Mult*/
+    synth.setParamValue("bpm",1 + load*225);/*Modulator Mult*/
     freq = random(noteRange);
     freq = notes[freq];
     synth.setParamValue("fmFreq1", freq);
-  
     synth.setParamValue("fmMm1",2);/*Modulator Mult*/
     synth.setParamValue("fmDp1",1);/*Modulator Depth*/
-    synth.setParamValue("fmAC1",3-(load*1.5));/*Carrier Attack*/
-    synth.setParamValue("fmRC1",3-(load*1.5));/*Carrier Release*/
-    synth.setParamValue("fmAM1",1);/*Modulator Attack*/
-    synth.setParamValue("fmRM1",1.5);/*Modulator Release*/
+    synth.setParamValue("fmAC1",3-(load*2.65));/*Carrier Attack*/
+    synth.setParamValue("fmRC1",3-(load*2.65));/*Carrier Release*/
+    synth.setParamValue("fmAM1",3-(load*2.65));/*Modulator Attack*/
+    synth.setParamValue("fmRM1",3-(load*2.65));/*Modulator Release*/
+    synth.setParamValue("fmEucNo1",11);
     float mod = map(x,-1,1,0.5,10);
     synth.setParamValue("fmModWheel1",mod);/*Mod Wheel*/
 
     freq = random(noteRange);
     freq = notes[freq];
     synth.setParamValue("fmFreq2", freq);
-
     synth.setParamValue("fmMm2",2);/*Modulator Mult*/
     synth.setParamValue("fmDp2",1);/*Modulator Depth*/
-    synth.setParamValue("fmAC2",3-(load*1.5));/*Carrier Attack*/
-    synth.setParamValue("fmRC2",3-(load*1.5));/*Carrier Release*/
-    synth.setParamValue("fmAM2",1);/*Modulator Attack*/
-    synth.setParamValue("fmRM2",1.5);/*Modulator Release*/
+    synth.setParamValue("fmAC2",3-(load*2.65));/*Carrier Attack*/
+    synth.setParamValue("fmRC2",3-(load*2.65));/*Carrier Release*/
+    synth.setParamValue("fmAM2",3-(load*2.65));/*Modulator Attack*/
+    synth.setParamValue("fmRM2",3-(load*2.65));/*Modulator Release*/
+    synth.setParamValue("fmEucNo2",3);
     mod = map(y,-1,1,0.5,10);
     synth.setParamValue("fmModWheel1",mod);/*Mod Wheel*/
 
     freq = random(noteRange);
     freq = notes[freq];
     synth.setParamValue("fmFreq3", freq);
-    
     synth.setParamValue("fmMm3",2);/*Modulator Mult*/
     synth.setParamValue("fmDp3",1);/*Modulator Depth*/
-    synth.setParamValue("fmAC3",3-(load*1.5));/*Carrier Attack*/
-    synth.setParamValue("fmRC3",3-(load*1.5));/*Carrier Release*/
-    synth.setParamValue("fmAM3",1);/*Modulator Attack*/
-    synth.setParamValue("fmRM3",1.5);/*Modulator Release*/
+    synth.setParamValue("fmAC3",3-(load*2.65));/*Carrier Attack*/
+    synth.setParamValue("fmRC3",3-(load*2.65));/*Carrier Release*/
+    synth.setParamValue("fmAM3",3-(load*2.65));/*Modulator Attack*/
+    synth.setParamValue("fmRM3",3-(load*2.65));/*Modulator Release*/
+    synth.setParamValue("fmEucNo3",7);
     mod = map(z,-1,1,0.1,10);
     synth.setParamValue("fmModWheel1", mod);/*Mod Wheel*/
 
