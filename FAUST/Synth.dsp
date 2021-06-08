@@ -15,6 +15,7 @@ envAR(att,rel,gate) = (_:1,_>0:- <: en.ar((_*gate,att:ba.sAndH),(_*gate,rel:ba.s
 fmVol = hslider("fmVol",0.5,0,1,0.001):si.smoo;
 fmVerb = hslider("fmVerb", 0.5,0,1,0.001):si.smoo;
 //fm synth 1
+fm1vol=hslider("fm1vol",1,0,1,0.001);
 fmNxtFreq1 = hslider("fmFreq1",69,0,127,0.01):ba.midikey2hz;
 fmMm1 = hslider("fmMm1",0.5,0.0,100,0.0001):si.smoo;
 fmDp1 = hslider("fmDp1",0.5,0.00,10,0.0001):si.smoo;
@@ -28,6 +29,7 @@ fmEucNo1 = hslider("fmEucNo1", 7, 0, 24, 1);
 fmModWheel1 = hslider("fmModWheel1", 1, 0.1, 100, 0.001):si.smoo;
 
 //fm synth 2
+fm2vol=hslider("fm2vol",1,0,1,0.001);
 fmNxtFreq2 = hslider("fmFreq2",62,0,127,0.01):ba.midikey2hz;
 fmMm2 = hslider("fmMm2",0.5,0.0,100,0.0001):si.smoo;
 fmDp2 = hslider("fmDp2",0.5,0.00,10,0.0001):si.smoo;
@@ -41,6 +43,7 @@ fmEucNo2 = hslider("fmEucNo2", 9, 0, 24, 1);
 fmModWheel2 = hslider("fmModWheel2", 1, 0.1, 100, 0.001):si.smoo;
 
 //fm synth 3
+fm3vol=hslider("fm3vol",1,0,1,0.001);
 fmNxtFreq3 = hslider("fmFreq3",52,0,127,0.01):ba.midikey2hz;
 fmMm3 = hslider("fmMm3",0.5,0.0,100,0.0001):si.smoo;
 fmDp3 = hslider("fmDp3",0.5,0.00,10,0.0001):si.smoo;
@@ -67,7 +70,7 @@ fmrm1 = fmRM1:ba.sAndH(fmTrig1);
 fm2op1(freq,mMul,dMul,trig,am,rm,ac,rc) =  
     os.osc(
         freq+(  os.osc(freq*mMul)*freq*dMul*en.ar(am,rm,trig)  )
-    )*envAR(ac,rc, trig);
+    )*envAR(ac,rc, trig)*fm1vol;
 fmDpm1 = fmDp1*fmModWheel1;
 //fm synth 2
 fmEuc2 = ((step*fmEucNo2) % 48) < fmEucNo2 : en.ar(0,0.001);
@@ -81,7 +84,7 @@ fmrm2 = fmRM2:ba.sAndH(fmTrig2);
 fm2op2(freq,mMul,dMul,trig,am,rm,ac,rc) =  
     os.osc(
         freq+(  os.osc(freq*mMul)*freq*dMul*en.ar(am,rm,trig)  )
-    )*envAR(ac,rc, trig);
+    )*envAR(ac,rc, trig)*fm2vol;
 fmDpm2 = fmDp2*fmModWheel2;
 //fm synth 3
 fmEuc3 = ((step*fmEucNo3) % 48) < fmEucNo3 : en.ar(0,0.001);
@@ -95,7 +98,7 @@ fmrm3 = fmRM3:ba.sAndH(fmTrig3);
 fm2op3(freq,mMul,dMul,trig,am,rm,ac,rc) =  
     os.osc(
         freq+(  os.osc(freq*mMul)*freq*dMul*en.ar(am,rm,trig)  )
-    )*envAR(ac,rc, trig);
+    )*envAR(ac,rc, trig)*fm3vol;
 fmDpm3 = fmDp3*fmModWheel3;
 //fm group
 dry = 1-(fmVerb);
@@ -111,6 +114,7 @@ fmSynths = (
 //___________________VARIABLES
 kroneVol = hslider("kroneVol",0.5,0,1,0.001);
 //krone1
+kd1vol=hslider("kd1vol",1,0,1,0.001);
 kdTrig1 = button("kdTrig1");
 kdNxtFreq1 = hslider("kdNxtFreq1", 30, 0, 127, 1):ba.midikey2hz;
 kdDelta1 = hslider("kdDelta1", -0.9,-0.99,5,0.001);
@@ -121,6 +125,7 @@ kdGateT1 = checkbox("kdGateT1");
 kdEucNo1 = hslider("kdEucNo1", 16, 0, 24, 1);
 
 //krone2
+kd2vol=hslider("kd2vol",1,0,1,0.001);
 kdTrig2 = button("kdTrig2");
 kdNxtFreq2 = hslider("kdNxtFreq2", 34, 0, 127, 1):ba.midikey2hz;
 kdDelta2 = hslider("kdDelta2", -0.1,-0.99,5,0.001);
@@ -140,7 +145,7 @@ kdFreq1 = kdNxtFreq1:ba.sAndH(kdGate1);
 kddelta1 = kdDelta1:ba.sAndH(kdGate1);
 kdRamp1 = kdFreq1+(kdFreq1*kddelta1*kdEnvT1);
 kdEnv1 = envAR(kdA1, kdR1, kdRawTrig1);
-krone1 = os.triangle(kdRamp1)*kdEnv1;
+krone1 = os.triangle(kdRamp1)*kdEnv1*kd1vol;
 
 //krone2
 kdEuc2 = ((step*kdEucNo2) % 48) < kdEucNo2 : en.ar(0,0.001);
@@ -151,7 +156,7 @@ kdFreq2 = kdNxtFreq2:ba.sAndH(kdGate2);
 kddelta2 = kdDelta2:ba.sAndH(kdGate2);
 kdRamp2 = kdFreq2+(kdFreq2*kddelta2*kdEnvT2);
 kdEnv2 = envAR(kdA2, kdR2, kdRawTrig2);
-krone2 = os.triangle(kdRamp2)*kdEnv2;
+krone2 = os.triangle(kdRamp2)*kdEnv2*kd2vol;
 
 
  
@@ -165,4 +170,4 @@ process = high, low;
 // process = fmSynths:co.compressor_mono(20, -15, 0.01, 0.02);
 // process = krone1+krone2:co.limiter_1176_R4_mono;
 // process = kdFreq1;
-// process = swerc1+swerc2:co.limiter_1176_R4_mono;
+// process = swerc1+swerc2:co.limiter_1176_R4_mono;s
