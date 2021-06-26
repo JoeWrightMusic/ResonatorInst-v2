@@ -1,10 +1,15 @@
+/*
+ * THIS VERSION USES THE FXOS8700+FXAS2100C for Gyro sensing
+ */
+
+
 //__________________________________________________________________LIBRARIES
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
-#include <Adafruit_LSM9DS1.h>
+#include <Adafruit_FXAS21002C.h>
 #include <Adafruit_Sensor.h> 
 #include <HX711.h>
 #include "Synth.h"
@@ -32,7 +37,7 @@ AudioConnection       parchCord3(mixerLeft, 0, out, 0);
 AudioConnection       parchCord4(mixerRight, 0, out, 1);
 
 //__________________________________________________________________GYRO SETUP
-Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1();
+Adafruit_FXAS21002C fxas = Adafruit_FXAS21002C(0x0021002C);
 float x=0;
 float y=0;
 float z=0;
@@ -44,18 +49,9 @@ float gSlidX[2]={0,0};
 float gSlidY[2]={0,0};
 float gSlidZ[2]={0,0};
 
-void setupGyro()
-{
-  /* 1.) Set the accelerometer range*/
-  lsm.setupAccel(lsm.LSM9DS1_ACCELRANGE_2G);
-  /* 2.) Set the magnetometer sensitivity*/
-  lsm.setupMag(lsm.LSM9DS1_MAGGAIN_4GAUSS);
-  /* 3.) Setup the gyroscope*/
-  lsm.setupGyro(lsm.LSM9DS1_GYROSCALE_245DPS);
-}
 
 //__________________________________________________________________LOAD CELL SETUP
-const int LOADCELL_SENSITIVITY=1.75;
+const int LOADCELL_SENSITIVITY=3.5;
 const int LOADCELL_DOUT_PIN = 3;
 const int LOADCELL_SCK_PIN = 4;
 float load=0;
@@ -116,14 +112,12 @@ void setup() {
   
   //_______________________________Start up Gyro
   #ifdef DEBUG//???????????????????
-    if (!lsm.begin()){
-      Serial.println("Oops ... unable to initialize the LSM9DS1.");
+    if (!fxas.begin()){
+      Serial.println("Oops ... unable to initialize the FXAS21002C.");
     }
-    Serial.println("Found LSM9DS1 9DOF");
+    Serial.println("Found FXAS21002C 9DOF");
   #endif//?????????????????????????
   
-  setupGyro();
-
   //________________________________Set up WAV Player
   SPI.setMOSI(SDCARD_MOSI_PIN);
   SPI.setSCK(SDCARD_SCK_PIN);
@@ -192,12 +186,12 @@ void readLoadCell(){
 //________________________________Read Gyro
 void readGyro(){
   /*get gyro readings*/
-  lsm.read(); 
-  sensors_event_t a, m, g, temp;
-  lsm.getEvent(&a, &m, &g, &temp); 
-  x=g.gyro.x;
-  y=g.gyro.y;
-  z=g.gyro.z;
+  sensors_event_t event;
+  fxas.getEvent(&event);
+  
+  x=event.gyro.x;
+  y=event.gyro.y;
+  z=event.gyro.z;
   /*store last 10 readings and average
     to smooth out readings*/
   gyroCirc=(gyroCirc+1)%10;
